@@ -1,0 +1,51 @@
+# Reusable workflow — CI Rust
+# Pour pawrise-backend (monorepo Cargo workspace) et tout crate Rust.
+# Usage :
+#   jobs:
+#     rust:
+#       uses: Pawrise/.github/.github/workflows/rust-ci.yml@main
+#       with:
+#         working-directory: "."        # optionnel
+#         toolchain: "stable"           # optionnel
+name: rust-ci
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        default: "."
+      toolchain:
+        type: string
+        default: "stable"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ inputs.toolchain }}
+          components: rustfmt, clippy
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Tests
+        run: cargo test --workspace --all-features
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: cargo audit (advisories RustSec)
+        uses: rustsec/audit-check@v2
+        with:
+          token: ${{ github.token }}

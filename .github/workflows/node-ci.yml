@@ -1,0 +1,46 @@
+# Reusable workflow — CI Node / TypeScript
+# Pour pawrise-vet-portal (Next.js) et website.
+# Les étapes lint/typecheck/test/build ne s'exécutent que si le script npm existe
+# (--if-present), donc tolérant tant que le repo n'a pas tout défini.
+# Usage :
+#   jobs:
+#     node:
+#       uses: Pawrise/.github/.github/workflows/node-ci.yml@main
+#       with:
+#         node-version: "20"           # optionnel
+#         working-directory: "."       # optionnel
+name: node-ci
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        default: "20"
+      working-directory:
+        type: string
+        default: "."
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint --if-present
+      - name: Typecheck
+        run: npm run typecheck --if-present
+      - name: Tests
+        run: npm test --if-present
+      - name: Build
+        run: npm run build --if-present

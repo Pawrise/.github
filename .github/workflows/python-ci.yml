@@ -1,0 +1,93 @@
+# Reusable workflow — CI Python (auto-détecte uv / poetry / pip)
+# Le workflow s'adapte au gestionnaire du repo appelant selon les fichiers présents :
+#   uv.lock (ou [tool.uv] dans pyproject) → uv
+#   poetry.lock                           → poetry
+#   requirements*.txt                     → pip
+#   pyproject.toml seul                   → pip install .
+# Usage :
+#   jobs:
+#     python:
+#       uses: Pawrise/.github/.github/workflows/python-ci.yml@main
+#       with:
+#         python-version: "3.12"   # optionnel
+#         working-directory: "."   # optionnel (monorepo)
+name: python-ci
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        type: string
+        default: "3.12"
+      working-directory:
+        type: string
+        default: "."
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      # Détecte le gestionnaire, installe les dépendances, et expose la commande
+      # de test à utiliser (car pytest doit tourner dans l'environnement du projet).
+      - name: Install dependencies (auto-detect)
+        id: deps
+        shell: bash
+        run: |
+          set -e
+          if [ -f uv.lock ] || grep -q '^\[tool\.uv\]' pyproject.toml 2>/dev/null; then
+            echo "Gestionnaire détecté : uv"
+            python -m pip install --upgrade uv
+            uv sync --frozen || uv sync
+            echo 'test=uv run --with pytest pytest -q' >> "$GITHUB_OUTPUT"
+          elif [ -f poetry.lock ]; then
+            echo "Gestionnaire détecté : poetry"
+            python -m pip install --upgrade poetry
+            poetry install --no-interaction --no-root || poetry install --no-interaction
+            echo 'test=poetry run pytest -q' >> "$GITHUB_OUTPUT"
+          elif ls requirements*.txt >/dev/null 2>&1; then
+            echo "Gestionnaire détecté : pip (requirements)"
+            python -m pip install --upgrade pip
+            for f in requirements*.txt; do pip install -r "$f"; done
+            pip install pytest
+            echo 'test=python -m pytest -q' >> "$GITHUB_OUTPUT"
+          elif [ -f pyproject.toml ]; then
+            echo "Gestionnaire détecté : pip (pyproject)"
+            python -m pip install --upgrade pip
+            pip install -e . || pip install .
+            pip install pytest
+            echo 'test=python -m pytest -q' >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Aucun gestionnaire de dépendances détecté (uv.lock / poetry.lock / requirements*.txt / pyproject.toml)"
+            echo 'test=python -m pytest -q' >> "$GITHUB_OUTPUT"
+          fi
+
+      # Ruff est un binaire autonome : lancé via pipx, indépendamment du gestionnaire.
+      # Lint bloquant (valeur principale) ; format non bloquant au début.
+      - name: Ruff lint
+        run: pipx run ruff check .
+
+      - name: Ruff format check
+        run: pipx run ruff format --check . || echo "::warning::Code non formaté ruff (non bloquant pour l'instant)"
+
+      # Tests dans l'environnement du projet ; tolère l'absence de tests (exit 5).
+      - name: Tests
+        shell: bash
+        run: |
+          set +e
+          ${{ steps.deps.outputs.test }}
+          code=$?
+          if [ $code -eq 5 ]; then
+            echo "::notice::Aucun test collecté pour l'instant"
+            exit 0
+          fi
+          exit $code
