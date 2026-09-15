@@ -13,7 +13,7 @@ ici, et appelés par chaque repo avec un fichier appelant de quelques lignes
 | Workflow | Pour | Étapes |
 |---|---|---|
 | `secret-scan.yml` | **tous** les repos | gitleaks (scan de secrets) |
-| `python-ci.yml` | pawrise-data, pawrise-assistant | uv sync · ruff (lint) · ruff format · pytest |
+| `python-ci.yml` | pawrise-data, pawrise-assistant | **auto-détecte uv / poetry / pip** · ruff (lint) · ruff format · pytest |
 | `rust-ci.yml` | pawrise-backend | fmt · clippy · test · cargo audit |
 | `node-ci.yml` | pawrise-vet-portal, website | npm ci · lint · typecheck · test · build |
 
