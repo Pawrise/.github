@@ -1,0 +1,88 @@
+name: "Proposer une fonctionnalité"
+description: "Proposer une nouvelle fonctionnalité ou une amélioration dans Pawrise"
+title: "[Feature] "
+labels:
+  - enhancement
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Décris la fonctionnalité proposée et le besoin auquel elle répond.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: "Composant concerné"
+      description: "Quel composant Pawrise est concerné par cette fonctionnalité ?"
+      options:
+        - Backend
+        - Mobile
+        - Portail vétérinaire
+        - Assistant
+        - Data
+        - Firmware / Pawrise Sense
+        - Plateforme / DevOps
+        - Site web
+        - Plusieurs composants
+        - Autre
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Besoin"
+      description: "Quel besoin ou problème cette fonctionnalité doit-elle résoudre ?"
+      placeholder: "Exemple : le propriétaire doit pouvoir consulter l'historique d'activité de son animal."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Fonctionnalité proposée"
+      description: "Décris le fonctionnement attendu."
+      placeholder: |
+        Exemple :
+        - afficher l'activité quotidienne ;
+        - permettre de consulter les 7 derniers jours ;
+        - afficher l'évolution sous forme de graphique.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "Critères d'acceptation"
+      description: "Quels éléments permettront de considérer la fonctionnalité comme terminée ?"
+      placeholder: |
+        - [ ] L'utilisateur peut consulter l'historique
+        - [ ] Les données sont correctement affichées
+        - [ ] Les erreurs sont gérées
+    validations:
+      required: false
+
+  - type: textarea
+    id: technical
+    attributes:
+      label: "Informations techniques"
+      description: "Ajoute si nécessaire des contraintes, pistes techniques, dépendances ou composants impactés."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: "Informations complémentaires"
+      description: "Ajoute toute autre information utile : maquettes, captures, documentation, références..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: "Vérifications"
+      options:
+        - label: "J'ai vérifié qu'une Issue similaire n'existe pas déjà."
+          required: true

@@ -1,0 +1,106 @@
+name: "Signaler un bug"
+description: "Signaler un comportement incorrect ou inattendu dans un composant Pawrise"
+title: "[Bug] "
+labels:
+  - bug
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre quelques instants pour décrire précisément le problème rencontré.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: "Composant concerné"
+      description: "Quel composant Pawrise est concerné par le problème ?"
+      options:
+        - Backend
+        - Mobile
+        - Portail vétérinaire
+        - Assistant
+        - Data
+        - Firmware / Pawrise Sense
+        - Plateforme / DevOps
+        - Site web
+        - Autre
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description du bug"
+      description: "Décris clairement le problème observé."
+      placeholder: "Exemple : l'application affiche une erreur lors de l'ouverture du profil d'un animal."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Étapes pour reproduire"
+      description: "Indique les étapes permettant de reproduire le problème."
+      placeholder: |
+        1. Ouvrir ...
+        2. Cliquer sur ...
+        3. Observer ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Comportement attendu"
+      description: "Que devrait-il se passer normalement ?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "Comportement observé"
+      description: "Que se passe-t-il réellement ?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environnement"
+      description: "Précise l'environnement concerné si cela est pertinent."
+      placeholder: |
+        Environnement : dev / staging / prod
+        OS :
+        Navigateur :
+        Version :
+        Appareil :
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs ou captures"
+      description: "Ajoute les logs, captures d'écran ou messages d'erreur utiles. Ne pas inclure de secret ou de donnée sensible."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: "Informations complémentaires"
+      description: "Ajoute toute autre information utile pour comprendre le problème."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: "Vérifications"
+      options:
+        - label: "J'ai vérifié qu'une Issue similaire n'existe pas déjà."
+          required: true
+        - label: "Je n'ai inclus aucun secret, token, mot de passe ou donnée sensible."
+          required: true
