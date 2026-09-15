@@ -1,0 +1,61 @@
+# Reusable workflow — CI Python (basé sur uv)
+# Convient aux repos utilisant pyproject.toml + uv.lock (ex. pawrise-data, pawrise-assistant).
+# Usage :
+#   jobs:
+#     python:
+#       uses: Pawrise/.github/.github/workflows/python-ci.yml@main
+#       with:
+#         python-version: "3.12"   # optionnel
+#         working-directory: "."   # optionnel (monorepo)
+name: python-ci
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        type: string
+        default: "3.12"
+      working-directory:
+        type: string
+        default: "."
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install ${{ inputs.python-version }}
+
+      - name: Sync dependencies
+        run: uv sync --frozen || uv sync
+
+      # Lint : bloquant. C'est la valeur principale de la CI.
+      - name: Ruff lint
+        run: uvx ruff check .
+
+      # Format : non bloquant au début (le code existant n'est pas forcément formaté ruff).
+      # À passer bloquant une fois la base de code alignée.
+      - name: Ruff format check
+        run: uvx ruff format --check . || echo "::warning::Code non formaté ruff (non bloquant pour l'instant)"
+
+      # Tests : tolère l'absence de tests (exit code 5 = aucun test collecté).
+      - name: Tests
+        run: |
+          set +e
+          uv run --with pytest pytest -q
+          code=$?
+          if [ $code -eq 5 ]; then
+            echo "::notice::Aucun test collecté pour l'instant"
+            exit 0
+          fi
+          exit $code
