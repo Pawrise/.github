@@ -115,12 +115,6 @@ Des modèles d'Issues sont disponibles pour :
 
 Ces modèles permettent de garder des Issues cohérentes et suffisamment détaillées dans l'ensemble des dépôts Pawrise.
 
-## Sécurité
-
-Les vulnérabilités de sécurité ne doivent pas être signalées via une Issue publique.
-
-La procédure de signalement et de traitement est définie dans `SECURITY.md`.
-
 ## Dépôts Pawrise
 
 L'organisation Pawrise est notamment composée des dépôts suivants :
