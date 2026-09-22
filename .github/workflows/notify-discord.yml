@@ -1,19 +1,26 @@
-# Reusable workflow — notification Discord (échec de CI).
-# Appelé par un petit workflow `notify.yml` dans chaque repo, déclenché via
-# `workflow_run` quand la CI se termine en échec.
-#
-# Le repo appelant passe le webhook en secret :
-#   secrets:
-#     webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+# Reusable workflow — notification Discord unifiée (échec + recovery).
+# Appelé par un `notify.yml` (via workflow_run) dans chaque repo.
+# - conclusion = failure               -> "❌ CI échouée"
+# - conclusion = success ET run précédent en échec -> "✅ CI réparée"
+# - success après success              -> rien (pas de spam)
 name: notify-discord
 
 on:
   workflow_call:
     inputs:
+      conclusion:
+        type: string
+        required: true
       repo:
         type: string
         required: true
       branch:
+        type: string
+        required: true
+      workflow-name:
+        type: string
+        required: true
+      run-id:
         type: string
         required: true
       run-url:
@@ -26,17 +33,35 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
     steps:
-      - name: Notify Discord
+      - name: Post to Discord
         env:
+          GH_TOKEN: ${{ github.token }}
+          WEBHOOK: ${{ secrets.webhook-url }}
+          CONCLUSION: ${{ inputs.conclusion }}
           REPO: ${{ inputs.repo }}
           BRANCH: ${{ inputs.branch }}
+          WF: ${{ inputs.workflow-name }}
+          RID: ${{ inputs.run-id }}
           RUN_URL: ${{ inputs.run-url }}
-          WEBHOOK: ${{ secrets.webhook-url }}
         run: |
-          payload=$(jq -n \
-            --arg repo "$REPO" \
-            --arg branch "$BRANCH" \
-            --arg url "$RUN_URL" \
-            '{content: ("❌ **CI échouée** — `" + $repo + "` sur `" + $branch + "`\n" + $url)}')
-          curl -sf -H "Content-Type: application/json" -d "$payload" "$WEBHOOK"
+          set -eo pipefail
+          prev=""
+          if [ "$CONCLUSION" = "success" ]; then
+            prev=$(gh api "repos/$REPO/actions/runs?branch=$BRANCH&status=completed&per_page=10" \
+              --jq "[.workflow_runs[] | select(.name==\"$WF\" and (.id|tostring)!=\"$RID\")][0].conclusion" 2>/dev/null || true)
+          fi
+          msg=""
+          if [ "$CONCLUSION" = "failure" ]; then
+            msg="❌ **CI échouée** — $REPO ($BRANCH) — $RUN_URL"
+          elif [ "$CONCLUSION" = "success" ] && [ "$prev" = "failure" ]; then
+            msg="✅ **CI réparée** — $REPO ($BRANCH) est repassé au vert — $RUN_URL"
+          fi
+          if [ -n "$msg" ]; then
+            payload=$(jq -n --arg c "$msg" '{content: $c}')
+            curl -sf -H "Content-Type: application/json" -d "$payload" "$WEBHOOK"
+          else
+            echo "Rien à notifier (conclusion=$CONCLUSION, prev=$prev)."
+          fi
