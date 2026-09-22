@@ -1,0 +1,42 @@
+# Reusable workflow — notification Discord (échec de CI).
+# Appelé par un petit workflow `notify.yml` dans chaque repo, déclenché via
+# `workflow_run` quand la CI se termine en échec.
+#
+# Le repo appelant passe le webhook en secret :
+#   secrets:
+#     webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+name: notify-discord
+
+on:
+  workflow_call:
+    inputs:
+      repo:
+        type: string
+        required: true
+      branch:
+        type: string
+        required: true
+      run-url:
+        type: string
+        required: true
+    secrets:
+      webhook-url:
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        env:
+          REPO: ${{ inputs.repo }}
+          BRANCH: ${{ inputs.branch }}
+          RUN_URL: ${{ inputs.run-url }}
+          WEBHOOK: ${{ secrets.webhook-url }}
+        run: |
+          payload=$(jq -n \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg url "$RUN_URL" \
+            '{content: ("❌ **CI échouée** — `" + $repo + "` sur `" + $branch + "`\n" + $url)}')
+          curl -sf -H "Content-Type: application/json" -d "$payload" "$WEBHOOK"
