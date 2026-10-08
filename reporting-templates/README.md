@@ -1,6 +1,6 @@
 # Templates de reporting d'équipe
 
-Templates **vierges** pour le reporting de sprint (livrable EPITECH). À **copier** dans l'espace
+Templates **vierges** pour le reporting de sprint. À **copier** dans l'espace
 de reporting du projet et remplir en fin de sprint.
 
 - `DELTA_LOG.template.md` — frictions procédure vs réalité
